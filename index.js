@@ -111,7 +111,7 @@ client.on('messageCreate', async (message) => {
                     // Guardar en el registro quién bloqueó qué canal
                     lockedChannels.set(message.channel.id, message.author.id);
                     
-                    message.channel.send(`🚨 **ALERTA: CANAL BLOQUEADO POR SPAM** 🚨\nCanal bloqueado temporalmente debido a la actividad masiva de ${message.author}.\n\n*El chat se reactivará automáticamente si el usuario abandona el servidor, o si un moderador usa el comando \`!unlock\`.*`);
+                    message.channel.send(`🚨 **ALERTA: CANAL BLOQUEADO POR SPAM** 🚨\nCanal bloqueado temporalmente debido a la actividad masiva de ${message.author}.\n\n*El chat se reactivará automáticamente si el usuario abandona el servidor, o si un moderador usa el comando \`!desbloquear\`.*`);
                 } catch (err) {
                     console.error("No pude bloquear el canal. Asegúrate de que el bot tenga permisos de 'Gestionar Canales'.");
                 }
@@ -129,8 +129,8 @@ client.on('messageCreate', async (message) => {
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
 
-    // Comando !clear (Limpia mensajes de un canal)
-    if (command === 'clear') {
+    // Comando !kaoscontrol (Limpia mensajes de un canal)
+    if (command === 'kaoscontrol') {
         const rolesPermitidos = ['Ⓐ𝐝𝐦𝐢𝐧 Ðᴇʟ Ҝ卄ⒶØ§ ★', '⛌ ⛌ ⛌ M e i n D e u s ⛌ ⛌ ⛌'];
         const tieneRolPermitido = message.member.roles.cache.some(role => rolesPermitidos.includes(role.name));
         const esAdministrador = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
@@ -148,7 +148,7 @@ client.on('messageCreate', async (message) => {
         }
 
         if (isNaN(amount) || amount < 1 || amount > 100) {
-            return message.reply('⚠️ Debes especificar un número entre 1 y 100. Ejemplo: `!clear 10` o `!clear @usuario 10`');
+            return message.reply('⚠️ Debes especificar un número entre 1 y 100. Ejemplo: `!kaoscontrol 10` o `!kaoscontrol @usuario 10`');
         }
 
         try {
@@ -173,8 +173,8 @@ client.on('messageCreate', async (message) => {
         }
     }
 
-    // Comando !kick (Expulsar miembro)
-    if (command === 'kick') {
+    // Comando !expulsar (Expulsar miembro)
+    if (command === 'expulsar') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers)) return message.reply('❌ No tienes permiso para expulsar.');
         const target = message.mentions.members.first();
         if (!target) return message.reply('⚠️ Por favor, menciona al usuario que deseas expulsar.');
@@ -184,8 +184,8 @@ client.on('messageCreate', async (message) => {
         message.reply(`✅ ${target.user.tag} fue expulsado del servidor.`);
     }
 
-    // Comando !ban (Banear miembro)
-    if (command === 'ban') {
+    // Comando !banear (Banear miembro)
+    if (command === 'banear') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers)) return message.reply('❌ No tienes permiso para banear.');
         const target = message.mentions.members.first();
         if (!target) return message.reply('⚠️ Por favor, menciona al usuario que deseas banear.');
@@ -195,8 +195,8 @@ client.on('messageCreate', async (message) => {
         message.reply(`🔨 ${target.user.tag} fue baneado del servidor.`);
     }
 
-    // Comando !unlock (Desbloquear canal tras ataque de spam)
-    if (command === 'unlock') {
+    // Comando !desbloquear (Desbloquear canal tras ataque de spam)
+    if (command === 'desbloquear') {
         // Se requiere permiso de Gestionar Canales o Administrador
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return message.reply('❌ No tienes permiso para gestionar canales.');
         
