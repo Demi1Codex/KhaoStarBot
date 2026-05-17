@@ -1,6 +1,16 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 
+// ==========================================
+// SERVIDOR FALSO PARA RENDER (Evita el Error de Puerto)
+// ==========================================
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => res.send('¡Bot de K卄ⒶØS 𝐒𝐓𝐀𝐑 ★ activo y funcionando!'));
+app.listen(port, () => console.log(`🌍 Servidor web encendido en el puerto ${port}`));
+
 // Crear una instancia del cliente con los Intents necesarios
 const client = new Client({
     intents: [
