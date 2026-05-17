@@ -1,5 +1,11 @@
 {
-  "description": "",
+  "name": "khaos-star-bot",
+  "version": "1.0.0",
+  "description": "Bot de moderación y defensa",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "discord.js": "^14.26.4",
     "dotenv": "^17.4.2"

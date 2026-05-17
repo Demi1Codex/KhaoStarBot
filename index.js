@@ -16,6 +16,7 @@ const client = new Client({
 // ==========================================
 const messageCount = new Map(); // Para rastrear mensajes por usuario (Anti-Spam)
 const joinCount = []; // Para rastrear entradas recientes (Anti-Mass-Join)
+const lockedChannels = new Map(); // Para rastrear canales bloqueados por spam (canalId => userId)
 
 const LIMIT_MESSAGES = 5;       // Máximo de mensajes permitidos
 const TIME_MESSAGES = 5000;     // En un periodo de 5 segundos
@@ -96,9 +97,23 @@ client.on('messageCreate', async (message) => {
                 await message.delete().catch(() => {});
                 try {
                     await message.member.timeout(5 * 60 * 1000, 'Sistema Anti-Spam: Enviar mensajes demasiado rápido');
-                    message.channel.send(`⛔ ${message.author} ha sido silenciado por 5 minutos debido a comportamiento de Spam.`);
                 } catch (err) {
                     console.log(`No pude silenciar a ${message.author.tag}. Revisa la jerarquía de roles del bot.`);
+                }
+                
+                // MODO DE EMERGENCIA: BLOQUEAR CANAL
+                try {
+                    // Quitar permiso de enviar mensajes a @everyone en este canal
+                    await message.channel.permissionOverwrites.edit(message.guild.id, {
+                        SendMessages: false
+                    });
+                    
+                    // Guardar en el registro quién bloqueó qué canal
+                    lockedChannels.set(message.channel.id, message.author.id);
+                    
+                    message.channel.send(`🚨 **ALERTA: CANAL BLOQUEADO POR SPAM** 🚨\nCanal bloqueado temporalmente debido a la actividad masiva de ${message.author}.\n\n*El chat se reactivará automáticamente si el usuario abandona el servidor, o si un moderador usa el comando \`!unlock\`.*`);
+                } catch (err) {
+                    console.error("No pude bloquear el canal. Asegúrate de que el bot tenga permisos de 'Gestionar Canales'.");
                 }
                 
                 messageCount.delete(authorId);
@@ -150,6 +165,40 @@ client.on('messageCreate', async (message) => {
         
         await target.ban({ reason: `Baneado por ${message.author.tag}` }).catch(() => {});
         message.reply(`🔨 ${target.user.tag} fue baneado del servidor.`);
+    }
+
+    // Comando !unlock (Desbloquear canal tras ataque de spam)
+    if (command === 'unlock') {
+        // Se requiere permiso de Gestionar Canales o Administrador
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return message.reply('❌ No tienes permiso para gestionar canales.');
+        
+        await message.channel.permissionOverwrites.edit(message.guild.id, {
+            SendMessages: null // Restaura el permiso original del rol @everyone
+        }).catch(() => {});
+        
+        lockedChannels.delete(message.channel.id);
+        message.reply('🔓 **El canal ha sido desbloqueado por un moderador.** Ya pueden volver a hablar.');
+    }
+});
+
+// ==========================================
+// DESBLOQUEO AUTOMÁTICO SI EL SPAMMER SALE
+// ==========================================
+client.on('guildMemberRemove', async (member) => {
+    // Revisar si este usuario causó el bloqueo de algún canal
+    for (const [channelId, spammerId] of lockedChannels.entries()) {
+        if (spammerId === member.id) {
+            const channel = member.guild.channels.cache.get(channelId);
+            if (channel) {
+                // Desbloquear el canal
+                await channel.permissionOverwrites.edit(member.guild.id, {
+                    SendMessages: null
+                }).catch(() => {});
+                
+                channel.send(`🔓 **CANAL DESBLOQUEADO AUTOMÁTICAMENTE**\nEl usuario problemático que causó el spam ha abandonado el servidor. Se restaura la comunicación.`);
+                lockedChannels.delete(channelId);
+            }
+        }
     }
 });
 
