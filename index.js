@@ -2,6 +2,19 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
 
 // ==========================================
+// PREVENCIÓN DE CRASHES (Evita que el bot se apague)
+// ==========================================
+process.on('unhandledRejection', (reason, p) => {
+    console.log(' [Anti-Crash] :: Promesa rechazada no manejada:', reason);
+});
+process.on('uncaughtException', (err, origin) => {
+    console.log(' [Anti-Crash] :: Excepción no capturada:', err);
+});
+process.on('uncaughtExceptionMonitor', (err, origin) => {
+    console.log(' [Anti-Crash] :: Monitor de Excepción:', err);
+});
+
+// ==========================================
 // SERVIDOR FALSO PARA RENDER (Evita el Error de Puerto)
 // ==========================================
 const express = require('express');
