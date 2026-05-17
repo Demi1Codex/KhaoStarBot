@@ -131,18 +131,46 @@ client.on('messageCreate', async (message) => {
 
     // Comando !clear (Limpia mensajes de un canal)
     if (command === 'clear') {
-        if (!memberHasModPermissions) return message.reply('❌ No tienes permiso para gestionar mensajes.');
+        const rolesPermitidos = ['Ⓐ𝐝𝐦𝐢𝐧 Ðᴇʟ Ҝ卄ⒶØ§ ★', '⛌ ⛌ ⛌ M e i n D e u s ⛌ ⛌ ⛌'];
+        const tieneRolPermitido = message.member.roles.cache.some(role => rolesPermitidos.includes(role.name));
+        const esAdministrador = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
+
+        if (!tieneRolPermitido && !esAdministrador) {
+            return message.reply('❌ Solo los rangos más altos (como Ⓐ𝐝𝐦𝐢𝐧 Ðᴇʟ Ҝ卄ⒶØ§ ★ o ⛌ ⛌ ⛌ M e i n D e u s ⛌ ⛌ ⛌) pueden usar este comando.');
+        }
         
-        const amount = parseInt(args[0]);
-        if (isNaN(amount) || amount < 1 || amount > 100) return message.reply('⚠️ Debes especificar un número entre 1 y 100.');
-        
-        await message.channel.bulkDelete(amount, true).catch(err => {
+        let targetUser = message.mentions.users.first();
+        let amount = parseInt(args[0]);
+
+        // Si el primer argumento es una mención, el número será el segundo argumento
+        if (targetUser && args[1]) {
+            amount = parseInt(args[1]);
+        }
+
+        if (isNaN(amount) || amount < 1 || amount > 100) {
+            return message.reply('⚠️ Debes especificar un número entre 1 y 100. Ejemplo: `!clear 10` o `!clear @usuario 10`');
+        }
+
+        try {
+            if (targetUser) {
+                // Descargar últimos 100 mensajes y filtrar los del usuario mencionado
+                const fetched = await message.channel.messages.fetch({ limit: 100 });
+                const userMessages = fetched.filter(m => m.author.id === targetUser.id);
+                const messagesToDelete = Array.from(userMessages.values()).slice(0, amount);
+                
+                await message.channel.bulkDelete(messagesToDelete, true);
+                const reply = await message.channel.send(`🗑️ He borrado ${messagesToDelete.length} mensajes de ${targetUser.username} exitosamente.`);
+                setTimeout(() => reply.delete().catch(() => {}), 3000);
+            } else {
+                // Borrado general normal
+                await message.channel.bulkDelete(amount, true);
+                const reply = await message.channel.send(`🗑️ He borrado ${amount} mensajes exitosamente.`);
+                setTimeout(() => reply.delete().catch(() => {}), 3000);
+            }
+        } catch (err) {
             console.error(err);
             message.reply('❌ Hubo un error al intentar eliminar los mensajes. Recuerda que no puedo borrar mensajes de más de 14 días.');
-        });
-        
-        const reply = await message.channel.send(`🗑️ He borrado ${amount} mensajes exitosamente.`);
-        setTimeout(() => reply.delete().catch(() => {}), 3000);
+        }
     }
 
     // Comando !kick (Expulsar miembro)
