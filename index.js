@@ -48,6 +48,21 @@ const TIME_JOINS = 10000;       // En un lapso de 10 segundos
 
 client.once('ready', () => {
     console.log(`🛡️ ¡Bot de Defensa y Moderación listo como ${client.user.tag}!`);
+
+    // ==========================================
+    // SEÑAL PREVENTIVA (Mantener activo en Render)
+    // ==========================================
+    setInterval(() => {
+        console.log(`[Señal Preventiva] El bot sigue activo. Alojado en servidor Render.`);
+        
+        // Auto-ping a la URL de Render para evitar que el proceso entre en suspensión (Free Tier)
+        const serverUrl = process.env.RENDER_EXTERNAL_URL || process.env.PING_URL;
+        if (serverUrl) {
+            fetch(serverUrl)
+                .then(() => console.log(`📡 Señal de auto-ping enviada con éxito a: ${serverUrl}`))
+                .catch(err => console.error(`⚠️ Error al enviar auto-ping a ${serverUrl}:`, err.message));
+        }
+    }, 2 * 60 * 1000); // Se ejecuta cada 2 minutos (120,000 ms)
 });
 
 // ==========================================
