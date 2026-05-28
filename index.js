@@ -31,7 +31,8 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers // Necesario para detectar entradas al servidor (Raid)
+        GatewayIntentBits.GuildMembers, // Necesario para detectar entradas al servidor (Raid)
+        GatewayIntentBits.GuildVoiceStates // Necesario para música en canales de voz
     ]
 });
 
@@ -46,6 +47,12 @@ const LIMIT_MESSAGES = 5;       // Máximo de mensajes permitidos
 const TIME_MESSAGES = 5000;     // En un periodo de 5 segundos
 const LIMIT_JOINS = 4;          // Usuarios que pueden unirse antes de activar alerta
 const TIME_JOINS = 10000;       // En un lapso de 10 segundos
+
+// ==========================================
+// SISTEMA DE MÚSICA
+// ==========================================
+const { setupMusic } = require('./music.js');
+const distube = setupMusic(client);
 
 client.once('ready', () => {
     console.log(`🛡️ ¡Bot de Defensa y Moderación listo como ${client.user.tag}!`);
@@ -276,6 +283,46 @@ client.on('messageCreate', async (message) => {
                 },
                 {
                     name: '═══════════════════════════',
+                    value: '**🎵 Comandos de Música**',
+                    inline: false
+                },
+                {
+                    name: '▶️ !playk <nombre o URL>',
+                    value: 'Reproduce música desde YouTube en tu canal de voz.',
+                    inline: false
+                },
+                {
+                    name: '⏭️ !skipk',
+                    value: 'Salta a la siguiente canción.',
+                    inline: true
+                },
+                {
+                    name: '⏹️ !stopk',
+                    value: 'Detiene la música y limpia la cola.',
+                    inline: true
+                },
+                {
+                    name: '📋 !queuek',
+                    value: 'Muestra las canciones en cola.',
+                    inline: true
+                },
+                {
+                    name: '🎶 !nowplayingk',
+                    value: 'Muestra la canción que suena ahora.',
+                    inline: true
+                },
+                {
+                    name: '🔊 !volumek <1-100>',
+                    value: 'Ajusta el volumen de reproducción.',
+                    inline: true
+                },
+                {
+                    name: '🔁 !loopk',
+                    value: 'Alterna repetición: canción / cola / desactivado.',
+                    inline: true
+                },
+                {
+                    name: '═══════════════════════════',
                     value: '**🤖 Sistemas Automáticos**',
                     inline: false
                 },
@@ -304,6 +351,128 @@ client.on('messageCreate', async (message) => {
             .setTimestamp();
 
         message.channel.send({ embeds: [embed] });
+    }
+
+    // --- 4. COMANDOS DE MÚSICA (sufijo K) ---
+    const voiceChannel = message.member.voice?.channel;
+
+    // Comando !playk (Reproducir música)
+    if (command === 'playk') {
+        if (!voiceChannel) return message.reply('❌ Debes estar en un canal de voz para usar este comando.');
+        const query = args.join(' ');
+        if (!query) return message.reply('⚠️ Escribe el nombre o URL de una canción. Ejemplo: `!playk Never Gonna Give You Up`');
+
+        try {
+            await distube.play(voiceChannel, query, {
+                textChannel: message.channel,
+                member: message.member,
+                metadata: { message },
+            });
+        } catch (err) {
+            console.error('Error en !playk:', err);
+            message.reply('❌ No pude reproducir esa canción.');
+        }
+    }
+
+    // Comando !skipk (Saltar canción)
+    if (command === 'skipk') {
+        const queue = distube.getQueue(message.guild.id);
+        if (!queue) return message.reply('❌ No hay música reproduciéndose.');
+        try {
+            const song = await distube.skip(message.guild.id);
+            message.channel.send(`⏭️ Saltada: **${song.name}**`);
+        } catch (err) {
+            message.reply('❌ No se pudo saltar la canción.');
+        }
+    }
+
+    // Comando !stopk (Detener música)
+    if (command === 'stopk') {
+        const queue = distube.getQueue(message.guild.id);
+        if (!queue) return message.reply('❌ No hay música reproduciéndose.');
+        try {
+            distube.stop(message.guild.id);
+            message.channel.send('⏹️ Música detenida y cola limpiada.');
+        } catch (err) {
+            message.reply('❌ No se pudo detener la música.');
+        }
+    }
+
+    // Comando !queuek (Mostrar cola)
+    if (command === 'queuek') {
+        const queue = distube.getQueue(message.guild.id);
+        if (!queue || !queue.songs.length) return message.reply('❌ La cola está vacía.');
+
+        const songs = queue.songs.slice(0, 15);
+        const desc = songs.map((s, i) => {
+            if (i === 0) return `**▶️ Reproduciendo:** [${s.name}](${s.url}) — \`${s.formattedDuration}\``;
+            return `**${i}.** [${s.name}](${s.url}) — \`${s.formattedDuration}\``;
+        }).join('\n');
+
+        const embed = new EmbedBuilder()
+            .setColor(0xb43cff)
+            .setTitle(`📋 Cola — ${queue.songs.length} canción(es)`)
+            .setDescription(desc)
+            .setFooter({ text: '✦ En constante actualización ✦' })
+            .setTimestamp();
+
+        message.channel.send({ embeds: [embed] });
+    }
+
+    // Comando !nowplayingk (Canción actual)
+    if (command === 'nowplayingk') {
+        const queue = distube.getQueue(message.guild.id);
+        if (!queue || !queue.songs.length) return message.reply('❌ No hay música reproduciéndose.');
+
+        const song = queue.songs[0];
+        const progress = queue.formattedCurrentTime || '0:00';
+        const total = song.formattedDuration || 'Live';
+
+        const embed = new EmbedBuilder()
+            .setColor(0xb43cff)
+            .setTitle('🎶 Reproduciendo ahora')
+            .setDescription(`[${song.name}](${song.url})`)
+            .addFields(
+                { name: 'Progreso', value: `${progress} / ${total}`, inline: true },
+                { name: 'Solicitado por', value: song.user?.tag || 'Desconocido', inline: true },
+                { name: 'Volumen', value: `${queue.volume}%`, inline: true }
+            )
+            .setThumbnail(song.thumbnail || null)
+            .setFooter({ text: '✦ En constante actualización ✦' })
+            .setTimestamp();
+
+        message.channel.send({ embeds: [embed] });
+    }
+
+    // Comando !volumek (Ajustar volumen)
+    if (command === 'volumek') {
+        const queue = distube.getQueue(message.guild.id);
+        if (!queue) return message.reply('❌ No hay música reproduciéndose.');
+
+        const vol = parseInt(args[0]);
+        if (isNaN(vol) || vol < 1 || vol > 100) return message.reply('⚠️ Especifica un volumen entre 1 y 100. Ejemplo: `!volumek 50`');
+
+        try {
+            distube.setVolume(message.guild.id, vol);
+            message.channel.send(`🔊 Volumen ajustado a **${vol}%**`);
+        } catch (err) {
+            message.reply('❌ No se pudo ajustar el volumen.');
+        }
+    }
+
+    // Comando !loopk (Alternar repetición)
+    if (command === 'loopk') {
+        const queue = distube.getQueue(message.guild.id);
+        if (!queue) return message.reply('❌ No hay música reproduciéndose.');
+
+        const modes = ['Desactivado', '🔂 Canción', '🔁 Cola'];
+        const nextMode = (queue.repeatMode + 1) % 3;
+        try {
+            distube.setRepeatMode(message.guild.id, nextMode);
+            message.channel.send(`🔁 Repetición: **${modes[nextMode]}**`);
+        } catch (err) {
+            message.reply('❌ No se pudo cambiar el modo de repetición.');
+        }
     }
 });
 
