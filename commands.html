@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K卄ⒶØS ★ — Comandos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Scanline overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.015) 2px,
+                rgba(255, 255, 255, 0.015) 4px
+            );
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(180, 60, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #b43cff, #ff3860);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+        }
+
+        .header .subtitle {
+            font-size: 1rem;
+            color: #888;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .header .subtitle span {
+            color: #ff3860;
+        }
+
+        /* Stats bar */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(180, 60, 255, 0.15);
+            border-radius: 12px;
+            padding: 1rem 1.8rem;
+            min-width: 130px;
+        }
+
+        .stat-item .number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #b43cff, #ff3860);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-item .label {
+            font-size: 0.8rem;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
+        /* Command cards */
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #b43cff;
+            margin: 2.5rem 0 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(180, 60, 255, 0.4), transparent);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 1.5rem 1.8rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(180, 60, 255, 0.3);
+            box-shadow: 0 0 25px rgba(180, 60, 255, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .card-header .icon {
+            font-size: 1.3rem;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(180, 60, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .card-header .command-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card-header .badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: auto;
+        }
+
+        .badge.admin {
+            background: rgba(255, 56, 96, 0.15);
+            color: #ff3860;
+            border: 1px solid rgba(255, 56, 96, 0.3);
+        }
+
+        .badge.mod {
+            background: rgba(180, 60, 255, 0.15);
+            color: #b43cff;
+            border: 1px solid rgba(180, 60, 255, 0.3);
+        }
+
+        .badge.everyone {
+            background: rgba(0, 200, 150, 0.15);
+            color: #00c896;
+            border: 1px solid rgba(0, 200, 150, 0.3);
+        }
+
+        .card .description {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 0.8rem;
+        }
+
+        .card .usage {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #b43cff;
+            display: inline-block;
+        }
+
+        .card .usage .arg {
+            color: #ff3860;
+        }
+
+        .card .usage .optional {
+            color: #666;
+        }
+
+        .card .perms {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.6rem;
+        }
+
+        .card .perms strong {
+            color: #999;
+        }
+
+        /* Auto-systems section */
+        .auto-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .auto-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.2rem;
+            transition: border-color 0.3s;
+        }
+
+        .auto-card:hover {
+            border-color: rgba(255, 56, 96, 0.2);
+        }
+
+        .auto-card .auto-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .auto-card .auto-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+            margin-bottom: 0.3rem;
+        }
+
+        .auto-card .auto-desc {
+            font-size: 0.8rem;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            text-align: center;
+            border-top: 1px solid rgba(180, 60, 255, 0.1);
+            width: 100%;
+        }
+
+        .footer .update-text {
+            font-size: 0.85rem;
+            color: #555;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .footer .update-text span {
+            color: #b43cff;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .footer .version {
+            font-size: 0.7rem;
+            color: #444;
+            margin-top: 0.3rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .stats { gap: 0.8rem; }
+            .stat-item { min-width: 100px; padding: 0.8rem 1rem; }
+            .card { padding: 1.2rem; }
+            .card-header { flex-wrap: wrap; }
+            .card-header .badge { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>✦ K卄ⒶØS ★ ✦</h1>
+            <p class="subtitle">Sistema de <span>Moderación</span> & <span>Defensa</span></p>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="number">4</div>
+                <div class="label">Comandos</div>
+            </div>
+            <div class="stat-item">
+                <div class="number">3</div>
+                <div class="label">Sistemas Auto</div>
+            </div>
+            <div class="stat-item">
+                <div class="number">24/7</div>
+                <div class="label">Protección</div>
+            </div>
+        </div>
+
+        <!-- Commands Section -->
+        <div class="section-title">⚡ Comandos de Moderación</div>
+
+        <!-- !kaoscontrol -->
+        <div class="card">
+            <div class="card-header">
+                <div class="icon">🗑️</div>
+                <span class="command-name">!kaoscontrol</span>
+                <span class="badge admin">Admin+</span>
+            </div>
+            <div class="description">
+                Limpia mensajes del canal. Puedes especificar un usuario para borrar solo sus mensajes, o una cantidad general. Máximo 100 mensajes por uso.
+            </div>
+            <div class="usage">
+                !kaoscontrol <span class="arg">&lt;cantidad&gt;</span>
+            </div>
+            &nbsp;
+            <div class="usage">
+                !kaoscontrol <span class="arg">@usuario</span> <span class="arg">&lt;cantidad&gt;</span>
+            </div>
+            <div class="perms"><strong>Permisos:</strong> Rol Ⓐ𝐝𝐦𝐢𝐧 Ðᴇʟ Ҝ卄ⒶØ§ ★, ⛌ ⛌ ⛌ M e i n D e u s ⛌ ⛌ ⛌ o Administrador</div>
+        </div>
+
+        <!-- !expulsar -->
+        <div class="card">
+            <div class="card-header">
+                <div class="icon">👢</div>
+                <span class="command-name">!expulsar</span>
+                <span class="badge mod">Mod+</span>
+            </div>
+            <div class="description">
+                Expulsa a un miembro del servidor. El usuario podrá volver si recibe una nueva invitación.
+            </div>
+            <div class="usage">
+                !expulsar <span class="arg">@usuario</span>
+            </div>
+            <div class="perms"><strong>Permisos:</strong> Expulsar Miembros (Kick Members)</div>
+        </div>
+
+        <!-- !banear -->
+        <div class="card">
+            <div class="card-header">
+                <div class="icon">🔨</div>
+                <span class="command-name">!banear</span>
+                <span class="badge mod">Mod+</span>
+            </div>
+            <div class="description">
+                Banea permanentemente a un miembro del servidor. No podrá volver a entrar.
+            </div>
+            <div class="usage">
+                !banear <span class="arg">@usuario</span>
+            </div>
+            <div class="perms"><strong>Permisos:</strong> Banear Miembros (Ban Members)</div>
+        </div>
+
+        <!-- !desbloquear -->
+        <div class="card">
+            <div class="card-header">
+                <div class="icon">🔓</div>
+                <span class="command-name">!desbloquear</span>
+                <span class="badge mod">Mod+</span>
+            </div>
+            <div class="description">
+                Desbloquea un canal que fue bloqueado automáticamente por el sistema Anti-Spam. Restaura los permisos de escritura para @everyone.
+            </div>
+            <div class="usage">
+                !desbloquear
+            </div>
+            <div class="perms"><strong>Permisos:</strong> Gestionar Canales (Manage Channels)</div>
+        </div>
+
+        <!-- Auto Systems Section -->
+        <div class="section-title">🤖 Sistemas Automáticos</div>
+
+        <div class="auto-grid">
+            <div class="auto-card">
+                <div class="auto-icon">🛡️</div>
+                <div class="auto-title">Anti-Spam</div>
+                <div class="auto-desc">
+                    Silencia automáticamente a quienes envíen más de 5 mensajes en 5 segundos. Bloquea el canal si la actividad persiste.
+                </div>
+            </div>
+            <div class="auto-card">
+                <div class="auto-icon">🚨</div>
+                <div class="auto-title">Anti-Raid</div>
+                <div class="auto-desc">
+                    Detecta y expulsa cuentas cuando 4 o más usuarios se unen en menos de 10 segundos.
+                </div>
+            </div>
+            <div class="auto-card">
+                <div class="auto-icon">🔗</div>
+                <div class="auto-title">Anti-Links</div>
+                <div class="auto-desc">
+                    Elimina automáticamente mensajes que contengan invitaciones a otros servidores de Discord.
+                </div>
+            </div>
+            <div class="auto-card">
+                <div class="auto-icon">🔄</div>
+                <div class="auto-title">Auto-Desbloqueo</div>
+                <div class="auto-desc">
+                    Si el usuario que causó el bloqueo del canal abandona el servidor, el canal se desbloquea solo.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="update-text">✦ <span>en constante actualización</span> ✦</div>
+        <div class="version">K卄ⒶØS ★ v1.0.0</div>
+    </footer>
+</body>
+</html>

@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, PermissionsBitField } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionsBitField, EmbedBuilder } = require('discord.js');
 
 // ==========================================
 // PREVENCIÓN DE CRASHES (Evita que el bot se apague)
@@ -22,6 +22,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', (req, res) => res.send('¡Bot de K卄ⒶØS 𝐒𝐓𝐀𝐑 ★ activo y funcionando!'));
+app.get('/comandos', (req, res) => res.sendFile(__dirname + '/commands.html'));
 app.listen(port, () => console.log(`🌍 Servidor web encendido en el puerto ${port}`));
 
 // Crear una instancia del cliente con los Intents necesarios
@@ -244,6 +245,65 @@ client.on('messageCreate', async (message) => {
         
         lockedChannels.delete(message.channel.id);
         message.reply('🔓 **El canal ha sido desbloqueado por un moderador.** Ya pueden volver a hablar.');
+    }
+
+    // Comando !comandos (Lista de comandos del bot)
+    if (command === 'comandos') {
+        const embed = new EmbedBuilder()
+            .setColor(0xb43cff)
+            .setTitle('✦ K卄ⒶØS ★ — Comandos ✦')
+            .setDescription('Sistema de **Moderación** y **Defensa** automatizada.')
+            .addFields(
+                {
+                    name: '🗑️ !kaoscontrol [@usuario] <cantidad>',
+                    value: 'Limpia mensajes del canal (1-100). Filtra por usuario si se menciona.\n› *Requiere rol Admin/MeinDeus*',
+                    inline: false
+                },
+                {
+                    name: '👢 !expulsar @usuario',
+                    value: 'Expulsa a un miembro del servidor.\n› *Requiere permiso Expulsar Miembros*',
+                    inline: false
+                },
+                {
+                    name: '🔨 !banear @usuario',
+                    value: 'Banea permanentemente a un miembro.\n› *Requiere permiso Banear Miembros*',
+                    inline: false
+                },
+                {
+                    name: '🔓 !desbloquear',
+                    value: 'Desbloquea un canal bloqueado por Anti-Spam.\n› *Requiere permiso Gestionar Canales*',
+                    inline: false
+                },
+                {
+                    name: '═══════════════════════════',
+                    value: '**🤖 Sistemas Automáticos**',
+                    inline: false
+                },
+                {
+                    name: '🛡️ Anti-Spam',
+                    value: 'Silencia tras 5 msg en 5s. Bloquea el canal si persiste.',
+                    inline: true
+                },
+                {
+                    name: '🚨 Anti-Raid',
+                    value: 'Expulsa si 4+ usuarios se unen en 10s.',
+                    inline: true
+                },
+                {
+                    name: '🔗 Anti-Links',
+                    value: 'Elimina invitaciones a otros servidores.',
+                    inline: true
+                },
+                {
+                    name: '🔄 Auto-Desbloqueo',
+                    value: 'Desbloquea canales si el spammer se va.',
+                    inline: true
+                }
+            )
+            .setFooter({ text: '✦ En constante actualización ✦' })
+            .setTimestamp();
+
+        message.channel.send({ embeds: [embed] });
     }
 });
 
