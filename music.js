@@ -1,8 +1,10 @@
 const { DisTube } = require('distube');
+const { YouTubePlugin } = require('@distube/youtube');
 const { EmbedBuilder } = require('discord.js');
 
 function setupMusic(client) {
     const distube = new DisTube(client, {
+        plugins: [new YouTubePlugin()],
         emitNewSongOnly: true,
         savePreviousSongs: true,
         joinNewVoiceChannel: true,

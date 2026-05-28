@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
+    "@distube/youtube": "^1.0.4",
     "discord.js": "^14.26.4",
     "distube": "^5.2.3",
     "dotenv": "^17.4.2",
