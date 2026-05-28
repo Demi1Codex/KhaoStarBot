@@ -9,11 +9,25 @@ if (process.env.YOUTUBE_COOKIES) {
     console.log('🍪 cookies.txt creado desde variable de entorno');
 }
 
+function parseCookies(filePath) {
+    if (!fs.existsSync(filePath)) return undefined;
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const cookies = [];
+    for (const line of raw.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const parts = trimmed.split('\t');
+        if (parts.length >= 7) {
+            cookies.push({ name: parts[5], value: parts[6] });
+        }
+    }
+    return cookies.length ? cookies : undefined;
+}
+
 function setupMusic(client) {
+    const cookieOpts = parseCookies('./cookies.txt');
     const youtubePlugin = new YouTubePlugin(
-        fs.existsSync('./cookies.txt')
-            ? { cookies: fs.readFileSync('./cookies.txt', 'utf8') }
-            : undefined
+        cookieOpts ? { cookies: cookieOpts } : undefined
     );
     const distube = new DisTube(client, {
         plugins: [youtubePlugin],
