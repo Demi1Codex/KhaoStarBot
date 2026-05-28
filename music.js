@@ -18,7 +18,17 @@ function parseCookies(filePath) {
         if (!trimmed || trimmed.startsWith('#')) continue;
         const parts = trimmed.split('\t');
         if (parts.length >= 7) {
-            cookies.push({ name: parts[5], value: parts[6] });
+            cookies.push({
+                name: parts[5],
+                value: parts[6],
+                domain: parts[0],
+                hostOnly: parts[1] === 'FALSE',
+                path: parts[2],
+                secure: parts[3] === 'TRUE',
+                httpOnly: parts.length > 7 ? parts[7] === 'TRUE' : false,
+                sameSite: 'none',
+                expirationDate: parseInt(parts[4]) || 0,
+            });
         }
     }
     return cookies.length ? cookies : undefined;
