@@ -1,10 +1,22 @@
+const fs = require('fs');
 const { DisTube } = require('distube');
 const { YouTubePlugin } = require('@distube/youtube');
 const { EmbedBuilder } = require('discord.js');
 
+if (process.env.YOUTUBE_COOKIES) {
+    const decoded = Buffer.from(process.env.YOUTUBE_COOKIES, 'base64').toString('utf8');
+    fs.writeFileSync('./cookies.txt', decoded);
+    console.log('🍪 cookies.txt creado desde variable de entorno');
+}
+
 function setupMusic(client) {
+    const youtubePlugin = new YouTubePlugin(
+        fs.existsSync('./cookies.txt')
+            ? { cookies: fs.readFileSync('./cookies.txt', 'utf8') }
+            : undefined
+    );
     const distube = new DisTube(client, {
-        plugins: [new YouTubePlugin()],
+        plugins: [youtubePlugin],
         emitNewSongOnly: true,
         savePreviousSongs: true,
         joinNewVoiceChannel: true,
